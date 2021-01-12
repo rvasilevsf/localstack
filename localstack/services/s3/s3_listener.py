@@ -511,7 +511,12 @@ def fix_range_content_type(bucket_name, path, headers, response):
     s3_client = aws_stack.connect_to_service('s3')
     path = urlparse.unquote(path)
     key_name = get_key_name(path, headers)
-    result = s3_client.head_object(Bucket=bucket_name, Key=key_name)
+    # If key is unavailable, this call throws an exception, returning HTTP 500 rather than HTTP 404.
+    try:
+        result = s3_client.head_object(Bucket=bucket_name, Key=key_name)
+    except:
+        return
+
     content_type = result['ContentType']
     if response.headers.get('Content-Type') == 'text/html; charset=utf-8':
         response.headers['Content-Type'] = content_type
